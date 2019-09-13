@@ -3,13 +3,34 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Function to takes data file paths as input and merge the data
+    on common attribute 'id'
+    
+    Input : 
+     - messages_filepath : filepath of disaster message dataset
+     - categories_filepath : filepath of categorical information of disaster messages
+     
+    Returns :
+     - df : merged dataframe of messages and their categorical value 
+     
+    '''
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = pd.merge(messages, categories, on='id')
     return df
 
 def clean_data(df):
-    import pdb; pdb.set_trace()
+    '''
+    Function to process data 
+    
+    Input:
+     - df : dataframe to be cleaned 
+     
+    Returns:
+     - df : return dataframe after processing
+     
+    '''
     # create a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(';', expand=True)
     # select the first row of the categories dataframe
@@ -47,6 +68,17 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    '''
+    Function to save dataframe into sqllite db.
+    
+    Input:
+     - df : dataframe to be saved into db
+     - database_filename : database name
+    
+    Returns:
+     - None
+     
+    '''
     engine = create_engine('sqlite:///{}'.format(database_filename))
     df.to_sql('DisasterResponse', engine, index=False)  
 
