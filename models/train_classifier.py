@@ -20,9 +20,19 @@ from sklearn.base import BaseEstimator, TransformerMixin
 print(nltk.download(['punkt', 'stopwords', 'wordnet']))
 print(nltk.download('averaged_perceptron_tagger'))
 
-print('test')
-
 def load_data(database_filepath):
+    '''
+    Function to load the data from database
+
+    Input : 
+     - database_filepath : relative location of database
+
+    Returns :
+     - X : training data containg messages
+     - Y : categorical information of messages
+     - category_names : column names ofo categories
+    '''
+
     # load data from database
     engine = create_engine('sqlite:///{}'.format(database_filepath))
     df = pd.read_sql_table(table_name='DisasterResponse', con=engine)
@@ -34,6 +44,15 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    '''
+    Function to process and tokenize passed sentence
+
+    Input :
+     - text : sentence which need to be processed
+    
+    Returns :
+     - clean_tokens : processed tokenized information
+    '''
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     detected_urls = re.findall(url_regex, text)
     for url in detected_urls:
@@ -47,27 +66,17 @@ def tokenize(text):
         clean_tokens.append(clean_token)
     return clean_tokens
 
-class StartingVerbExtractor(BaseEstimator, TransformerMixin):
-
-    def starting_verb(self, text):
-
-        sentence_list = nltk.sent_tokenize(text)
-        for sentence in sentence_list:
-            pos_tags = nltk.pos_tag(tokenize(sentence))
-            if len(pos_tags) > 0:
-                first_word, first_tag = pos_tags[0]
-                if first_tag in ['VB', 'VBP'] or first_word == 'RT':
-                    return True
-        return False
-
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, X):
-        X_tagged = pd.Series(X).apply(self.starting_verb)
-        return pd.DataFrame(X_tagged)
 
 def build_model():
+    '''
+    Function to build model pipeline
+
+    Input :
+     - None
+
+    Returns : 
+     - cv : tuned GridSearchCV model
+    '''
     pipeline = Pipeline([
                         ('vect', CountVectorizer(tokenizer=tokenize)),
                         ('tfidf', TfidfTransformer()),
@@ -85,6 +94,21 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Fucntion to evaluate the performance of model
+
+    Input :
+     - model - trained model object
+     - X_test - Test disaster messages
+     - Y_test - Test cetgorical data of messages
+     - category_names : column names ofo categories
+
+     Return :
+      - None
+    
+    It will print the result on terminal
+
+    '''
     y_pred = model.predict(X_test)
     y_pred_df = pd.DataFrame(y_pred, columns = category_names)
     for column in category_names:
@@ -94,10 +118,25 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    Functiion to save the trained model
+
+    Input :
+     - model : trained model object
+     - model_filepath : filepath where model pickel file will be saved
+    
+    Returns :
+     - None
+    '''
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
+    '''
+    Main method for the execution of all functions
+    
+    '''
+
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
