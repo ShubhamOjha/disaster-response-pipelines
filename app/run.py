@@ -11,6 +11,8 @@ from plotly.graph_objs import Bar
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
+from nltk.corpus import stopwords
+
 
 app = Flask(__name__)
 
@@ -26,11 +28,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('DisasterResponse', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,6 +44,17 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+
+    # Top five categories count
+    category = df.drop(df.columns[0:4], axis=1)
+    category = category.apply(pd.to_numeric)
+    top_category_data = category.sum()[:5].values
+    top_category_names = list(category.sum()[:5].index)
+
+    # Most frequent words
+    word_series = pd.Series(' '.join(df['message']).lower().split())
+    top_word_data = word_series[~word_series.isin(stopwords.words("english"))].value_counts()[:5]
+    top_word_names = list(top_word_data.index)
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -61,6 +74,42 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=top_word_names,
+                    y=top_word_data
+                )
+            ],
+
+            'layout': {
+                'title': 'Most Frequent Words',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Words"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=top_category_names,
+                    y=top_category_data
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
                 }
             }
         }
