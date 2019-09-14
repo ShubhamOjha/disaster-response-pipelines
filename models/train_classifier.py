@@ -38,6 +38,7 @@ def load_data(database_filepath):
     df = pd.read_sql_table(table_name='DisasterResponse', con=engine)
     X = df['message']
     Y = df.iloc[:,4:]
+    Y = Y.apply(pd.to_numeric)
     category_names = list(df.columns[4:])
     
     return X, Y, category_names
@@ -134,7 +135,7 @@ def save_model(model, model_filepath):
 def main():
     '''
     Main method for the execution of all functions
-    
+
     '''
 
     if len(sys.argv) == 3:
